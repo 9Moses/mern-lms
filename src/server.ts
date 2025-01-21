@@ -1,5 +1,6 @@
-import { app } from "./app";
-require("dotenv").config();
+import { app } from "../app.js";
+import dotenv from "dotenv";
+dotenv.config();
 
 //create server
 app.listen(process.env.PORT, () => {
