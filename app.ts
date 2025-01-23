@@ -4,6 +4,7 @@ import cors from "cors";
 import cookieParser from "cookie-parser";
 import dotenv from "dotenv";
 dotenv.config();
+import { ErrorMiddleware } from "./middleware/error.js";
 
 //body praser
 app.use(express.json({ limit: "30mb" }));
@@ -32,3 +33,5 @@ app.all("*", (req: Request, res: Response, next: NextFunction) => {
   err.statusCode = 400;
   next(err);
 });
+
+app.use(ErrorMiddleware);
