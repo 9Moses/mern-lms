@@ -14,3 +14,5 @@ const connectDB = async () => {
     setTimeout(connectDB, 5000);
   }
 };
+
+export default connectDB;
