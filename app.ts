@@ -5,6 +5,7 @@ import cookieParser from "cookie-parser";
 import dotenv from "dotenv";
 dotenv.config();
 import { ErrorMiddleware } from "./middleware/error.js";
+import userRouter from "./routes/user.route.js";
 
 //body praser
 app.use(express.json({ limit: "30mb" }));
@@ -19,6 +20,9 @@ app.use(
   })
 );
 
+//routes
+app.use("/api", userRouter);
+
 //resting api
 app.get("/test", (req: Request, res: Response, next: NextFunction) => {
   res.status(200).json({
@@ -29,7 +33,7 @@ app.get("/test", (req: Request, res: Response, next: NextFunction) => {
 
 //unkown route
 app.all("*", (req: Request, res: Response, next: NextFunction) => {
-  const err = new Error(`Rout ${req.originalUrl} not found`) as any;
+  const err = new Error(`Route ${req.originalUrl} not found`) as any;
   err.statusCode = 400;
   next(err);
 });
