@@ -9,6 +9,8 @@ import path from "path";
 import sendMail from "../utils/sendMail.js";
 dotenv.config();
 import { fileURLToPath } from "url"; // Import from 'url'
+import { sendToken } from "../utils/jwt.js";
+
 // Define __dirname
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -135,6 +137,57 @@ export const activateUser = CatchAsyncErrors(
           email: user.email,
           activation_code,
         },
+      });
+    } catch (error: any) {
+      return next(new ErrorHandlers(error.message, 400));
+    }
+  }
+);
+
+//login user
+interface ILoginRequest {
+  email: string;
+  password: string;
+}
+
+export const loginUser = CatchAsyncErrors(
+  async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const { email, password } = req.body as ILoginRequest;
+
+      if (!email || !password) {
+        return next(new ErrorHandlers("Please enter email and password", 400));
+      }
+
+      const user = await userModel.findOne({ email }).select("+password");
+
+      if (!user) {
+        return next(new ErrorHandlers("Invalid email or password", 400));
+      }
+
+      const isPasswordMatch = await user.comparePassword(password);
+
+      if (!isPasswordMatch) {
+        return next(new ErrorHandlers("Invalid password", 400));
+      }
+
+      sendToken(user, 200, res);
+    } catch (error: any) {
+      return next(new ErrorHandlers(error.message, 400));
+    }
+  }
+);
+
+//logout user
+export const logoutUser = CatchAsyncErrors(
+  async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      res.cookie("access_token", "", { maxAge: 1 });
+      res.cookie("refresh_token", "", { maxAge: 1 });
+
+      res.status(200).json({
+        success: true,
+        message: "Logged out successfully",
       });
     } catch (error: any) {
       return next(new ErrorHandlers(error.message, 400));
