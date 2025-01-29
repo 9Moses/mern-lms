@@ -23,6 +23,12 @@ export interface IUser extends Document {
   SignRefreshToken: () => string;
 }
 
+declare module "express-serve-static-core" {
+  interface Request {
+    user?: IUser;
+  }
+}
+
 const userSchema: Schema<IUser> = new mongoose.Schema(
   {
     name: {

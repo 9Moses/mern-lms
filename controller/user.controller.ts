@@ -10,6 +10,7 @@ import sendMail from "../utils/sendMail.js";
 dotenv.config();
 import { fileURLToPath } from "url"; // Import from 'url'
 import { sendToken } from "../utils/jwt.js";
+import { redis } from "../utils/redis.js";
 
 // Define __dirname
 const __filename = fileURLToPath(import.meta.url);
@@ -184,6 +185,9 @@ export const logoutUser = CatchAsyncErrors(
     try {
       res.cookie("access_token", "", { maxAge: 1 });
       res.cookie("refresh_token", "", { maxAge: 1 });
+
+      const userId = req.user?._id?.toString() || "";
+      redis.del(userId);
 
       res.status(200).json({
         success: true,

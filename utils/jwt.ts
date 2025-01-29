@@ -20,7 +20,7 @@ export const sendToken = (user: IUser, statusCode: number, res: Response) => {
   redis.set(user._id.toString(), JSON.stringify(user));
 
   const accessTokenExpire = parseInt(
-    process.env.ACCESS_TOKEN_EXPIRE || "300",
+    process.env.ACCESS_TOKEN_EXPIRE || "2000",
     10
   );
   const refreshTokenExpire = parseInt(
@@ -31,7 +31,7 @@ export const sendToken = (user: IUser, statusCode: number, res: Response) => {
   //option for cookies
   const accessTokenOption: ITokenOptions = {
     expires: new Date(Date.now() + accessTokenExpire * 1000),
-    maxAge: accessTokenExpire * 1000,
+    maxAge: accessTokenExpire * 100000,
     httpOnly: true,
     sameSite: "lax",
   };

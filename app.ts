@@ -1,12 +1,11 @@
 import express, { NextFunction, Request, Response } from "express";
-export const app = express();
 import cors from "cors";
 import cookieParser from "cookie-parser";
 import dotenv from "dotenv";
 dotenv.config();
 import { ErrorMiddleware } from "./middleware/error.js";
 import userRouter from "./routes/user.route.js";
-
+export const app = express();
 //body praser
 app.use(express.json({ limit: "30mb" }));
 
