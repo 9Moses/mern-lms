@@ -2,15 +2,20 @@ import { Request, Response, NextFunction } from "express";
 import userModel, { IUser } from "../model/user.model.js";
 import ErrorHandlers from "../utils/errorHandler.js";
 import { CatchAsyncErrors } from "../middleware/catchAsyncErrors.js";
-import jwt, { Secret } from "jsonwebtoken";
+import jwt, { JwtPayload, Secret } from "jsonwebtoken";
 import ejs from "ejs";
 import dotenv from "dotenv";
 import path from "path";
 import sendMail from "../utils/sendMail.js";
 dotenv.config();
 import { fileURLToPath } from "url"; // Import from 'url'
-import { sendToken } from "../utils/jwt.js";
+import {
+  accessTokenOption,
+  refreshTokenOption,
+  sendToken,
+} from "../utils/jwt.js";
 import { redis } from "../utils/redis.js";
+import { getUserById } from "../service/user.service.js";
 
 // Define __dirname
 const __filename = fileURLToPath(import.meta.url);
@@ -193,6 +198,104 @@ export const logoutUser = CatchAsyncErrors(
         success: true,
         message: "Logged out successfully",
       });
+    } catch (error: any) {
+      return next(new ErrorHandlers(error.message, 400));
+    }
+  }
+);
+
+//update access token
+export const updateAccessToken = CatchAsyncErrors(
+  async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const refresh_token = req.cookies.refresh_token as string;
+
+      const decode = jwt.verify(
+        refresh_token,
+        process.env.REFRESH_TOKEN as string
+      ) as JwtPayload;
+
+      const message = "Couldn't refresh token";
+
+      if (!decode) {
+        return next(new ErrorHandlers(message, 400));
+      }
+
+      const sessions = await redis.get(decode.id as string);
+
+      if (!sessions) {
+        return next(new ErrorHandlers("session", 400));
+      }
+
+      const user = JSON.parse(sessions);
+
+      const accessToken = jwt.sign(
+        { id: user.id },
+        process.env.ACCESS_TOKEN as string,
+        {
+          expiresIn: "5m",
+        }
+      );
+
+      const refreshToken = jwt.sign(
+        { id: user._id },
+        process.env.REFRESH_TOKEN as string,
+        {
+          expiresIn: "3d",
+        }
+      );
+
+      res.cookie("access_token", accessToken, accessTokenOption);
+      res.cookie("refresh_token", refreshToken, refreshTokenOption);
+
+      res.status(200).json({
+        status: "success",
+        accessToken,
+      });
+    } catch (error: any) {
+      return next(new ErrorHandlers(error.message, 400));
+    }
+  }
+);
+
+//get user infor
+export const getUserInfo = CatchAsyncErrors(
+  async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const userId = req.user?._id.toString();
+
+      if (!userId) {
+        return res
+          .status(400)
+          .json({ success: false, message: "User ID is required" });
+      }
+
+      getUserById(userId, res);
+    } catch (error: any) {
+      return next(new ErrorHandlers(error.message, 400));
+    }
+  }
+);
+
+interface ISocialAuthBody {
+  email: string;
+  name: string;
+  avatar?: string;
+}
+
+//socil auth
+export const socialAuth = CatchAsyncErrors(
+  async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const { email, name, avatar } = req.body as ISocialAuthBody;
+
+      const user = await userModel.findOne({ email });
+      if (!user) {
+        const newUser = await userModel.create({ email, name, avatar });
+        sendToken(newUser, 200, res);
+      } else {
+        sendToken(user, 200, res);
+      }
     } catch (error: any) {
       return next(new ErrorHandlers(error.message, 400));
     }
