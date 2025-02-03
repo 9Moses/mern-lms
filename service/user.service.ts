@@ -1,17 +1,13 @@
 import { Response } from "express";
-import userModel from "../model/user.model.js";
-import { Types } from "mongoose";
+import { redis } from "../utils/redis.js";
 
-export const getUserById = async (
-  id: Types.ObjectId | string,
-  res: Response
-) => {
-  const user = await userModel.findById(id);
-  if (!user) {
-    return res.status(404).json({ success: false, message: "User not found" });
+export const getUserById = async (id: string, res: Response) => {
+  const userJson = await redis.get(id);
+  if (userJson) {
+    const user = JSON.parse(userJson);
+    res.status(200).json({
+      success: true,
+      user,
+    });
   }
-  res.status(200).json({
-    success: true,
-    user,
-  });
 };

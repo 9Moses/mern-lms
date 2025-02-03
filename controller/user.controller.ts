@@ -245,6 +245,8 @@ export const updateAccessToken = CatchAsyncErrors(
         }
       );
 
+      req.user = user;
+
       res.cookie("access_token", accessToken, accessTokenOption);
       res.cookie("refresh_token", refreshToken, refreshTokenOption);
 
@@ -296,6 +298,56 @@ export const socialAuth = CatchAsyncErrors(
       } else {
         sendToken(user, 200, res);
       }
+    } catch (error: any) {
+      return next(new ErrorHandlers(error.message, 400));
+    }
+  }
+);
+
+//update user info
+interface IUpdateUserInfo {
+  name?: string;
+  email?: string;
+}
+
+export const updateUserInfo = CatchAsyncErrors(
+  async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const { name, email } = req.body as IUpdateUserInfo;
+      const userId = req.user?._id.toString();
+
+      if (!userId) {
+        return res
+          .status(400)
+          .json({ success: false, message: "User ID is required" });
+      }
+
+      const user = await userModel.findById(userId);
+      if (!user) {
+        return next(new ErrorHandlers("User doesn't exist", 400));
+      }
+
+      if (email && name) {
+        const isEmailExist = await userModel.findOne({ email });
+
+        if (!isEmailExist) {
+          return next(new ErrorHandlers("Email already exist", 400));
+        }
+        user.email = email;
+      }
+
+      if (name && user) {
+        user.name = name;
+      }
+
+      await user?.save();
+
+      await redis.set(userId, JSON.stringify(user));
+
+      res.status(201).json({
+        sucess: true,
+        user,
+      });
     } catch (error: any) {
       return next(new ErrorHandlers(error.message, 400));
     }
