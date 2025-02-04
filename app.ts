@@ -5,6 +5,8 @@ import dotenv from "dotenv";
 dotenv.config();
 import { ErrorMiddleware } from "./middleware/error.js";
 import userRouter from "./routes/user.route.js";
+import courseRouter from "./routes/course.route.js";
+
 export const app = express();
 //body praser
 app.use(express.json({ limit: "30mb" }));
@@ -21,6 +23,7 @@ app.use(
 
 //routes
 app.use("/api", userRouter);
+app.use("/api", courseRouter);
 
 //resting api
 app.get("/test", (req: Request, res: Response, next: NextFunction) => {

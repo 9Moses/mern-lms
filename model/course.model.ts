@@ -37,7 +37,7 @@ export interface ICourse extends Document {
   estimatedPrice?: number;
   thumbnail: object;
   tags: string;
-  leveL: string;
+  level: string;
   demoUrl: string;
   benefits: {
     title: string;
@@ -73,7 +73,6 @@ const commentSchema = new Schema<IComment>({
 
 const courseDataSchema = new Schema<ICourseData>({
   videoUrl: String,
-  videoThumbnail: Object,
   title: String,
   videoSection: String,
   description: String,
@@ -103,41 +102,37 @@ const cousreSchema = new Schema<ICourse>({
   thumbnail: {
     public_id: {
       type: String,
-      required: true,
     },
-    url: { type: String, required: true },
-    tags: {
-      type: String,
-      required: true,
+    url: { type: String },
+  },
+  tags: {
+    type: String,
+  },
+  level: {
+    type: String,
+  },
+  demoUrl: {
+    type: String,
+  },
+  benefits: [
+    {
+      title: String,
     },
-    level: {
-      type: String,
-      required: true,
+  ],
+  prerequisties: [
+    {
+      title: String,
     },
-    demoUrl: {
-      type: String,
-      required: true,
-    },
-    benefits: [
-      {
-        title: String,
-      },
-    ],
-    prerequisties: [
-      {
-        title: String,
-      },
-    ],
-    reviews: [reviewSchema],
-    courseData: [courseDataSchema],
-    ratings: {
-      type: Number,
-      default: 0,
-    },
-    purchased: {
-      type: Number,
-      default: 0,
-    },
+  ],
+  reviews: [reviewSchema],
+  courseData: [courseDataSchema],
+  ratings: {
+    type: Number,
+    default: 0,
+  },
+  purchased: {
+    type: Number,
+    default: 0,
   },
 });
 
