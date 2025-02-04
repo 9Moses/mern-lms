@@ -7,6 +7,8 @@ import {
   registrationUser,
   socialAuth,
   updateAccessToken,
+  updatePassword,
+  updateProfilePic,
   updateUserInfo,
 } from "../controller/user.controller.js";
 import { isAuthenticated, authorizeRoles } from "../middleware/auth.js";
@@ -20,6 +22,8 @@ userRouter.get("/signout", isAuthenticated, logoutUser);
 userRouter.get("/refresh", updateAccessToken);
 userRouter.get("/getuserinfo", isAuthenticated, getUserInfo);
 userRouter.post("/socialauth", socialAuth);
-userRouter.post("/update-user-info", isAuthenticated, updateUserInfo);
+userRouter.put("/update-user-info", isAuthenticated, updateUserInfo);
+userRouter.put("/update-user-password", isAuthenticated, updatePassword);
+userRouter.put("/update-user-avatar", isAuthenticated, updateProfilePic);
 
 export default userRouter;
