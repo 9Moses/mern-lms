@@ -83,7 +83,6 @@ export const getSingleCourse = CatchAsyncErrors(
           course,
         });
 
-        console.log("hiting redis");
       } else {
         const course = await CourseModel.findById(req.params.id).select(
           "-courseData.videoUrl -courseData.suggestion -courseData.questions -courseData.links"
@@ -96,8 +95,6 @@ export const getSingleCourse = CatchAsyncErrors(
             .status(404)
             .json({ success: false, message: "Course not found" });
         }
-
-        console.log("hiting mongo");
 
         res.status(200).json({
           success: true,
@@ -133,6 +130,37 @@ export const getAllCourses = CatchAsyncErrors(
           course,
         });
       }
+    } catch (error: any) {
+      return next(new ErrorHandlers(error.message, 500));
+    }
+  }
+);
+
+//get course content -- only for valid user
+export const getCourseByUser = CatchAsyncErrors(
+  async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const userCourseList = req.user?.course;
+      const courseId = req.params.id;
+
+      const courseExist = userCourseList?.find(
+        (course: any) => course._id.toString() === courseId
+      );
+
+      if (!courseExist) {
+        return next(
+          new ErrorHandlers("You are not eligible to access this course", 404)
+        );
+      }
+
+      const course = await CourseModel.findById(courseId);
+
+      const content = course?.courseData;
+
+      res.status(200).json({
+        success: true,
+        content,
+      });
     } catch (error: any) {
       return next(new ErrorHandlers(error.message, 500));
     }
