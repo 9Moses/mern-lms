@@ -304,3 +304,114 @@ export const addAnswer = CatchAsyncErrors(
     }
   }
 );
+
+//add review in course
+interface IAddReviewData {
+  review: string;
+  rating: number;
+  userId: string;
+}
+
+export const addReview = CatchAsyncErrors(
+  async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const userCourseList = req.user?.course;
+
+      const courseId = req.params.id;
+
+      const courseExist = userCourseList?.some(
+        (cousre: any) => cousre._id.toString == courseId
+      );
+
+      if (!courseExist) {
+        return next(
+          new ErrorHandlers("You are not eligible to access this course", 400)
+        );
+      }
+
+      const course = await CourseModel.findById(courseId);
+
+      const { review, rating } = req.body as IAddReviewData;
+
+      const reviewData: any = {
+        user: req.user,
+        comment: review,
+        rating,
+      };
+
+      course?.reviews.push(reviewData);
+
+      let avg = 0;
+      course?.reviews.forEach((rev: any) => {
+        avg += rev.rating;
+      });
+
+      if (course) {
+        course.ratings = avg / course?.reviews.length; // eg. we have 2 review one is 5 and other is 4 = 9 / 2 = 4.5 rating
+      }
+
+      await course?.save();
+
+      //create notification
+      const notification = {
+        title: "New Review Recieved",
+        message: `${req.user?.name} has given a review in ${course?.name}`,
+      };
+
+      res.status(200).json({
+        success: true,
+        course,
+      });
+    } catch (error: any) {
+      return next(new ErrorHandlers(error.message, 500));
+    }
+  }
+);
+
+interface IAddReviewReply {
+  comment: string;
+  courseId: string;
+  reviewId: string;
+}
+
+//add reply in review
+export const addReplyToReview = CatchAsyncErrors(
+  async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const { comment, courseId, reviewId } = req.body as IAddReviewReply;
+
+      const course = await CourseModel.findById(courseId);
+
+      if (!course) {
+        return next(new ErrorHandlers("Course not found", 404));
+      }
+
+      const review = course?.reviews?.find(
+        (rev: any) => rev._id.toString() === reviewId
+      );
+
+      if (!review) {
+        return next(new ErrorHandlers("Review not found", 404));
+      }
+
+      const replyData: any = {
+        user: req.user,
+        comment,
+      };
+
+      if(!review.commentReplies ){
+        review.commentReplies = []
+      }
+      review?.commentReplies?.push(replyData);
+
+      await course.save();
+
+      res.status(200).json({
+        success: true,
+        course,
+      });
+    } catch (error: any) {
+      return next(new ErrorHandlers(error.message, 500));
+    }
+  }
+);
