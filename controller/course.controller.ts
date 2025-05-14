@@ -3,13 +3,17 @@ import CourseModel from "../model/course.model.js";
 import ErrorHandlers from "../utils/errorHandler.js";
 import { CatchAsyncErrors } from "../middleware/catchAsyncErrors.js";
 import cloudinary from "cloudinary";
-import { createCourse } from "../service/course.service.js";
+import {
+  createCourse,
+  getAllCourseService,
+} from "../service/course.service.js";
 import { redis } from "../utils/redis.js";
 import mongoose from "mongoose";
 import ejs from "ejs";
 import path from "path";
 import { fileURLToPath } from "url"; // Import from 'url'
 import sendMail from "../utils/sendMail.js";
+import NotificationModel from "../model/notification.model.js";
 // Define __dirname
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -209,6 +213,12 @@ export const addQuestion = CatchAsyncErrors(
       //add this question to our course content
       courseContent?.questions.push(newQuestion);
 
+      await NotificationModel.create({
+        user: req.user?._id,
+        title: `New Questions Receivied`,
+        message: `You have a new question for ${courseContent?.title}`,
+      });
+
       //save the update course
       await course?.save();
 
@@ -272,6 +282,11 @@ export const addAnswer = CatchAsyncErrors(
 
       if (req.user?._id === question.user?._id) {
         //create a notification
+        await NotificationModel.create({
+          user: req.user?._id,
+          title: `New Answer Receivied`,
+          message: `You have a new answer for ${courseContent?.title}`,
+        });
       } else {
         const data = {
           name: question.user.name,
@@ -399,8 +414,8 @@ export const addReplyToReview = CatchAsyncErrors(
         comment,
       };
 
-      if(!review.commentReplies ){
-        review.commentReplies = []
+      if (!review.commentReplies) {
+        review.commentReplies = [];
       }
       review?.commentReplies?.push(replyData);
 
@@ -412,6 +427,17 @@ export const addReplyToReview = CatchAsyncErrors(
       });
     } catch (error: any) {
       return next(new ErrorHandlers(error.message, 500));
+    }
+  }
+);
+
+//get all course  - only for admin
+export const getAllCourse = CatchAsyncErrors(
+  async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      getAllCourseService(res);
+    } catch (error: any) {
+      return next(new ErrorHandlers(error.message, 400));
     }
   }
 );

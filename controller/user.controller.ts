@@ -15,7 +15,7 @@ import {
   sendToken,
 } from "../utils/jwt.js";
 import { redis } from "../utils/redis.js";
-import { getUserById } from "../service/user.service.js";
+import { getAllUsersService, getUserById } from "../service/user.service.js";
 import cloudinary from "cloudinary";
 
 // Define __dirname
@@ -467,6 +467,17 @@ export const updateProfilePic = CatchAsyncErrors(
           user,
         },
       });
+    } catch (error: any) {
+      return next(new ErrorHandlers(error.message, 400));
+    }
+  }
+);
+
+//get all user  - only for admin
+export const getAllUsers = CatchAsyncErrors(
+  async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      getAllUsersService(res);
     } catch (error: any) {
       return next(new ErrorHandlers(error.message, 400));
     }
