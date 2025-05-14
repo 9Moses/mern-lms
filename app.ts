@@ -8,6 +8,7 @@ import userRouter from "./routes/user.route.js";
 import courseRouter from "./routes/course.route.js";
 import orderRouter from "./routes/order.route.js";
 import notificationRouter from "./routes/notification.route.js";
+import analyticsRouter from "./routes/analytic.route.js";
 
 export const app = express();
 //body praser
@@ -28,6 +29,7 @@ app.use("/api", userRouter);
 app.use("/api", courseRouter);
 app.use("/api", orderRouter);
 app.use("/api", notificationRouter);
+app.use("/api", analyticsRouter);
 
 //resting api
 app.get("/test", (req: Request, res: Response, next: NextFunction) => {
